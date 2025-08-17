@@ -1,12 +1,9 @@
 name: node-ci
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
 
-# Prevents overlapping runs on the same branch
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -16,30 +13,19 @@ permissions:
 
 jobs:
   verify:
+    name: verify
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-
       - name: Install & Run Checks (conditional)
         shell: bash
         run: |
           if [ -f package.json ]; then
-            echo "package.json found. Installing and running checks..."
-            if [ -f package-lock.json ]; then
-              npm ci
-            else
-              npm install
-            fi
-
-            # These only run if scripts exist; otherwise they no-op
+            if [ -f package-lock.json ]; then npm ci; else npm install; fi
             npm run -s lint --if-present
             npm run -s typecheck --if-present
             npm run -s build --if-present
